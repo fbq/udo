@@ -1,0 +1,6 @@
+[package]
+name = "udo"
+version = "0.1.0"
+authors = ["Boqun Feng <boqun.feng@gmail.com>"]
+
+[dependencies]
