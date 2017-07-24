@@ -38,4 +38,20 @@ mod tests {
         t2.join().unwrap();
 
     }
+/*
+ * This should introduce failure at compile time.
+    #[test]
+    fn lifetime() {
+        use mcs::Lock; 
+        let mut l;
+
+        {
+            let m = Lock::new(0);
+            l = m.lock();
+        }
+
+        *l = 1;
+    }
+*/
+
 }

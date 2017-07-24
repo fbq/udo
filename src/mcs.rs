@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicPtr, AtomicBool, Ordering};
 use std::ops::{Deref, DerefMut};
 use std::boxed::Box;
+use std::cell::UnsafeCell;
 use std::ptr;
 
 struct MCSNode {
@@ -47,16 +48,16 @@ unsafe fn mcs_unlock(queue: *mut MCSQueue, node : *mut MCSNode) {
     }
 }
 
-pub struct LockGuard<T> {
+pub struct LockGuard<'a, T> {
     data : *mut T,
-    queue : *const MCSQueue,
+    queue : &'a UnsafeCell<MCSQueue>,
     node_ptr : *mut MCSNode,
 }
 
-impl<T> Drop for LockGuard<T> {
+impl<'a, T> Drop for LockGuard<'a, T> {
     fn drop(&mut self) {
         unsafe {
-            mcs_unlock(self.queue as *mut MCSQueue, self.node_ptr);
+            mcs_unlock(self.queue.get(), self.node_ptr);
 
             // Free the object create by box
             Box::from_raw(self.node_ptr);
@@ -66,7 +67,7 @@ impl<T> Drop for LockGuard<T> {
 }
 
 
-impl<T> Deref for LockGuard<T> {
+impl<'a, T> Deref for LockGuard<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -77,7 +78,7 @@ impl<T> Deref for LockGuard<T> {
 
 }
 
-impl<T> DerefMut for LockGuard<T> {
+impl<'a, T> DerefMut for LockGuard<'a, T> {
     fn deref_mut(&mut self) -> &mut T{
         unsafe { 
             &mut *self.data
@@ -86,19 +87,17 @@ impl<T> DerefMut for LockGuard<T> {
 }
 
 pub struct Lock<T> {
-    queue : MCSQueue,
-    data_ptr : *mut T, 
+    queue : UnsafeCell<MCSQueue>,
+    data : UnsafeCell<T>, 
 }
 
 impl<T> Lock<T> {
     pub fn new(t : T) -> Lock<T> {
-        let data = Box::new(t);
-
         Lock {
-            queue : MCSQueue {
+            queue : UnsafeCell::new(MCSQueue {
                 tail : AtomicPtr::new(ptr::null_mut()),
-            },
-            data_ptr : Box::into_raw(data),
+            }),
+            data : UnsafeCell::new(t),
         }
     }
 
@@ -110,12 +109,12 @@ impl<T> Lock<T> {
 
         let ret = LockGuard {
             node_ptr : Box::into_raw(node_box),
-            data : self.data_ptr,
+            data : self.data.get(),
             queue : & self.queue,
         };
 
         unsafe {
-            mcs_lock(ret.queue as *mut MCSQueue, ret.node_ptr);
+            mcs_lock(ret.queue.get(), ret.node_ptr);
         }
         ret
     }
