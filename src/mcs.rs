@@ -11,7 +11,7 @@ struct MCSNode {
 
 impl Drop for MCSNode {
     fn drop(&mut self) {
-        println!("MCSNode freed"); 
+        println!("MCSNode freed");
     }
 }
 
@@ -36,7 +36,7 @@ unsafe fn mcs_lock(queue: *mut MCSQueue, node : *mut MCSNode) {
 
 unsafe fn mcs_unlock(queue: *mut MCSQueue, node : *mut MCSNode) {
     if (*queue).tail.compare_and_swap(node, ptr::null_mut(), Ordering::AcqRel) == node {
-        return; 
+        return;
     }
 
     loop {
@@ -71,7 +71,7 @@ impl<'a, T> Deref for LockGuard<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
-        unsafe { 
+        unsafe {
             &*self.data
         }
     }
@@ -80,7 +80,7 @@ impl<'a, T> Deref for LockGuard<'a, T> {
 
 impl<'a, T> DerefMut for LockGuard<'a, T> {
     fn deref_mut(&mut self) -> &mut T{
-        unsafe { 
+        unsafe {
             &mut *self.data
         }
     }
@@ -88,7 +88,7 @@ impl<'a, T> DerefMut for LockGuard<'a, T> {
 
 pub struct Lock<T> {
     queue : UnsafeCell<MCSQueue>,
-    data : UnsafeCell<T>, 
+    data : UnsafeCell<T>,
 }
 
 impl<T> Lock<T> {

@@ -42,7 +42,7 @@ mod tests {
  * This should introduce failure at compile time.
     #[test]
     fn lifetime() {
-        use mcs::Lock; 
+        use mcs::Lock;
         let mut l;
 
         {
