@@ -1,18 +1,16 @@
 mod mcs;
 
-pub use mcs::{Lock, LockGuard};
-
 #[cfg(test)]
 mod tests {
 
     #[test]
     fn it_works() {
 
-        use mcs::Lock;
+        use mcs;
         use std::thread;
         use std::sync::Arc;
 
-        let m = Arc::new(Lock::new(0));
+        let m = Arc::new(mcs::Lock::new(0));
 
         let m1 = m.clone();
         let m2 = m.clone();
@@ -20,18 +18,18 @@ mod tests {
         {
             let l = m.lock();
 
-            println!("{:?}", *l);
+            println!("main thread {:?}!!!", *l);
         }
 
         let t2 = thread::spawn(move || {
             let l = m2.lock();
-            println!("{:?}", *l);
+            println!("read thread {:?}", *l);
         });
 
         let t1 = thread::spawn(move || {
             let mut l = m1.lock();
             *l = 1;
-            println!("{:?}", *l);
+            println!("write thread1 {:?}", *l);
         });
 
         t1.join().unwrap();

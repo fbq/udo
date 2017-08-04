@@ -11,7 +11,7 @@ struct MCSNode {
 
 impl Drop for MCSNode {
     fn drop(&mut self) {
-        println!("MCSNode freed");
+        #[cfg(test)] eprintln!("MCSNode {:?} freed", &*self as *const MCSNode);
     }
 }
 
@@ -21,6 +21,8 @@ struct MCSQueue {
 }
 
 unsafe fn mcs_lock(queue: *mut MCSQueue, node : *mut MCSNode) {
+    #[cfg(test)] eprintln!("Locked at {:?} in queue {:?}", node, queue);
+
     let prev = (*queue).tail.swap(node, Ordering::AcqRel);
 
     if prev.is_null() {
@@ -35,6 +37,8 @@ unsafe fn mcs_lock(queue: *mut MCSQueue, node : *mut MCSNode) {
 }
 
 unsafe fn mcs_unlock(queue: *mut MCSQueue, node : *mut MCSNode) {
+    #[cfg(test)] eprintln!("Unlocked at {:?} in queue {:?}", node, queue);
+
     if (*queue).tail.compare_and_swap(node, ptr::null_mut(), Ordering::AcqRel) == node {
         return;
     }
