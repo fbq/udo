@@ -48,6 +48,7 @@ unsafe fn mcs_unlock(queue: *mut MCSQueue, node : *mut MCSNode) {
 
         if !next.is_null() {
             (*next).locked.store(false, Ordering::Release);
+            return;
         }
     }
 }
